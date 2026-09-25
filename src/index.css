@@ -1,0 +1,83 @@
+@import url("https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Outfit:wght@400;500;600&display=swap");
+:root {
+  --void: #07040f;
+  --card: rgba(28, 14, 48, 0.72);
+  --line: rgba(255, 186, 92, 0.22);
+  --text: #fff6e8;
+  --muted: #c9b8d8;
+  --gold: #ffb84a;
+  --mint: #5ef0c0;
+}
+* { box-sizing: border-box; }
+html, body, #root { margin: 0; min-height: 100%; }
+body {
+  font-family: Outfit, system-ui, sans-serif;
+  color: var(--text);
+  background:
+    radial-gradient(900px 500px at 10% -10%, #5b1d8a 0%, transparent 55%),
+    radial-gradient(700px 420px at 110% 10%, #7a3a00 0%, transparent 50%),
+    linear-gradient(180deg, #120818 0%, var(--void) 42%, #0a0614 100%);
+  min-height: 100vh;
+}
+a { color: inherit; }
+.shell { max-width: 1120px; margin: 0 auto; padding: 0 22px 96px; }
+header.nav {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 14px; padding: 18px 0 20px;
+}
+.brand { font-family: Fraunces, Georgia, serif; font-size: 22px; text-decoration: none; letter-spacing: -0.03em; }
+.brand span { color: var(--gold); }
+.links { display: flex; gap: 20px; font-size: 14px; }
+.links a { color: var(--muted); text-decoration: none; position: relative; }
+.links a:hover, .links a.active { color: var(--text); }
+.links a.active::after { content: ""; position: absolute; left: 0; right: 0; bottom: -8px; height: 2px; background: var(--gold); }
+.clock {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 8px 12px; border-radius: 999px;
+  border: 1px solid var(--line); background: rgba(0,0,0,0.28);
+  font-size: 12px; letter-spacing: 0.04em;
+}
+.dot { width: 8px; height: 8px; border-radius: 99px; background: var(--gold); box-shadow: 0 0 10px var(--gold); }
+.dot.on { background: var(--mint); box-shadow: 0 0 10px var(--mint); }
+.hero { padding: 48px 0 20px; }
+.hero h1 {
+  font-family: Fraunces, Georgia, serif;
+  font-size: clamp(42px, 8vw, 84px);
+  line-height: 0.92; margin: 0 0 18px; max-width: 14ch;
+}
+.hero p { color: var(--muted); font-size: 18px; max-width: 540px; line-height: 1.5; }
+.pills { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 32px; }
+.pill {
+  position: relative; overflow: hidden;
+  background: linear-gradient(180deg, #ffd27a, var(--gold));
+  color: #2a1600; font-weight: 600; text-decoration: none;
+  padding: 12px 18px; border-radius: 999px; border: 0;
+  box-shadow: 0 10px 30px rgba(255, 184, 74, 0.25);
+  transition: transform 0.2s ease;
+}
+.pill:nth-child(2), .pill:nth-child(3) {
+  background: transparent; color: var(--text); border: 1px solid var(--line); box-shadow: none;
+}
+.pill:hover { transform: translateY(-3px) scale(1.02); }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 14px; margin-top: 20px; }
+.card {
+  background: var(--card); border: 1px solid var(--line); border-radius: 20px;
+  padding: 18px; text-decoration: none; color: inherit;
+  backdrop-filter: blur(16px); transition: transform 0.22s ease, border-color 0.22s ease;
+}
+.card:hover { transform: translateY(-6px); border-color: var(--gold); }
+.card h3 { margin: 0 0 8px; font-family: Fraunces, Georgia, serif; }
+.card p { margin: 0; color: var(--muted); font-size: 13px; }
+.page h1 { font-family: Fraunces, Georgia, serif; }
+.muted { color: var(--muted); }
+.chart-box { height: 300px; border-radius: 22px; padding: 14px; background: var(--card); border: 1px solid var(--line); }
+.kv { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 20px 0; }
+.kv div { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 14px; }
+.kv dt { color: var(--muted); font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; }
+.kv dd { margin: 8px 0 0; font-size: 26px; font-family: Fraunces, Georgia, serif; }
+.warn { color: var(--gold); }
+footer { margin-top: 72px; color: var(--muted); font-size: 12px; border-top: 1px solid var(--line); padding-top: 16px; }
+@media (max-width: 700px) {
+  .links { display: none; }
+  .kv { grid-template-columns: 1fr; }
+}

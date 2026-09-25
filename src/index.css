@@ -49,3 +49,7 @@ header.nav { display: flex; align-items: center; justify-content: space-between;
 .warn { color: #8a5a12; }
 footer { margin-top: 64px; padding-top: 16px; border-top: 1px solid var(--line); color: var(--muted); font-size: 12px; }
 @media (max-width: 640px) { .kv { grid-template-columns: 1fr; } }
+
+.brand { display: inline-flex; align-items: center; gap: 10px; }
+.logo { width: 42px; height: 42px; object-fit: cover; border-radius: 10px; background: #fff; border: 1px solid var(--line); }
+.desk { margin-top: 18px; }

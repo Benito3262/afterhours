@@ -6,6 +6,7 @@ import { jupBuy, mintFor } from "../lib/mints";
 import { venuesFromInfo } from "../lib/venues";
 import { mark, pickAsset, tokenCmcId } from "../lib/parse";
 import { sessionStatus } from "../lib/session";
+import SwapDesk from "../components/SwapDesk";
 
 function packOhlcv(j, cid) {
   const raw = j.data;
@@ -101,17 +102,11 @@ export default function Asset() {
           <p className="muted">No history for this range yet.</p>
         )}
       </div>
-      <h2>Buy this token</h2>
-      {buy && <a className="buy" href={jupBuy(buy.mint)} target="_blank" rel="noreferrer">Solana · {buy.symbol} on Jupiter</a>}
-      {venues.map((v) => (
-        <a key={v.addr} className="buy" href={v.href} target="_blank" rel="noreferrer">{v.chain} · trade</a>
-      ))}
-      {!buy && venues.length === 0 && (
-        <p className="muted">Looking up contract addresses on CMC. If none appear, this asset has no Solana or EVM token we can route.</p>
-      )}
-      {(buy || venues[0]) && (
-        <iframe className="jup" title="swap" src={(venues.find((v) => v.embed) || {}).embed || (buy ? `https://jup.ag/swap/USDC-${buy.symbol}` : "")} />
-      )}
+      <h2>Buy on this page</h2>
+      <SwapDesk
+        solMint={buy?.mint || venues.find((v) => v.chain === "Solana")?.addr}
+        evmAddr={venues.find((v) => v.chain === "Ethereum")?.addr}
+      />
     </section>
   );
 }

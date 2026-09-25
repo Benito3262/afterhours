@@ -18,6 +18,8 @@ export default async function handler(req, res) {
     "/v2/cryptocurrency/ohlcv/historical",
     "/v2/cryptocurrency/quotes/latest",
     "/v3/cryptocurrency/quotes/historical",
+    "/v2/cryptocurrency/info",
+    "/v1/cryptocurrency/info",
   ];
   if (!allowed.includes(path)) {
     res.status(400).json({ error: "Endpoint not allowed" });

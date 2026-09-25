@@ -11,3 +11,5 @@ export const ohlcv = (id, count = 30) =>
   cmc("/v2/cryptocurrency/ohlcv/historical", { id: String(id), time_period: "daily", count: String(count), convert: "USD" });
 export const histQuotes = (id, count = 30) =>
   cmc("/v3/cryptocurrency/quotes/historical", { id: String(id), interval: "daily", count: String(count), convert: "USD" });
+
+export const cryptoInfo = (id) => cmc("/v2/cryptocurrency/info", { id: String(id) });

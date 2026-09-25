@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import { histQuotes, ohlcv, rwaQuote } from "../lib/cmc";
+import { cryptoInfo, histQuotes, ohlcv, rwaQuote } from "../lib/cmc";
 import { jupBuy, mintFor } from "../lib/mints";
+import { venuesFromInfo } from "../lib/venues";
 import { mark, pickAsset, tokenCmcId } from "../lib/parse";
 import { sessionStatus } from "../lib/session";
 
@@ -30,6 +31,7 @@ export default function Asset() {
   const [chart, setChart] = useState([]);
   const [range, setRange] = useState("7D");
   const [err, setErr] = useState("");
+  const [venues, setVenues] = useState([]);
 
   useEffect(() => {
     rwaQuote(id).then((j) => setAsset(pickAsset(j, id))).catch((e) => setErr(e.message));
@@ -49,6 +51,19 @@ export default function Asset() {
         }).catch(() => histQuotes(cid, count).then((j) => packHist(j, cid)));
     load.then(setChart).catch(() => setChart([]));
   }, [asset, range]);
+  useEffect(() => {
+    const ids = (asset?.tokens || []).map((x) => x.crypto_id || x.id).filter(Boolean);
+    const first = tokenCmcId(asset || {});
+    const all = [...new Set([first, ...ids].filter(Boolean))];
+    if (!all.length) return;
+    Promise.all(all.map((cid) => cryptoInfo(cid).then((j) => venuesFromInfo(j, cid)).catch(() => [])))
+      .then((lists) => {
+        const flat = lists.flat();
+        const seen = new Set();
+        setVenues(flat.filter((v) => (seen.has(v.addr) ? false : seen.add(v.addr))));
+      });
+  }, [asset]);
+
 
   const px = mark(asset || {});
   const tokens = asset?.tokens || [];
@@ -86,16 +101,16 @@ export default function Asset() {
           <p className="muted">No history for this range yet.</p>
         )}
       </div>
-      {buy ? (
-        <>
-          <a className="buy" href={jupBuy(buy.mint)} target="_blank" rel="noreferrer">Buy {buy.symbol} on Jupiter</a>
-          <iframe className="jup" title="jupiter" src={`https://jup.ag/swap/USDC-${buy.symbol}`} />
-        </>
-      ) : (
-        <p className="muted">
-          Trade is on-site only when the asset has a Solana mint we mapped (AAPLx, NVDAx, TSLAx, SPCXx).
-          Gold tokens like PAXG live on other chains — use the venue for that token.
-        </p>
+      <h2>Buy this token</h2>
+      {buy && <a className="buy" href={jupBuy(buy.mint)} target="_blank" rel="noreferrer">Solana · {buy.symbol} on Jupiter</a>}
+      {venues.map((v) => (
+        <a key={v.addr} className="buy" href={v.href} target="_blank" rel="noreferrer">{v.chain} · trade</a>
+      ))}
+      {!buy && venues.length === 0 && (
+        <p className="muted">Looking up contract addresses on CMC. If none appear, this asset has no Solana or EVM token we can route.</p>
+      )}
+      {(buy || venues[0]) && (
+        <iframe className="jup" title="swap" src={(venues.find((v) => v.embed) || {}).embed || (buy ? `https://jup.ag/swap/USDC-${buy.symbol}` : "")} />
       )}
     </section>
   );

@@ -1,56 +1,70 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import { ohlcv, rwaQuote } from "../lib/cmc";
+import { histQuotes, ohlcv, rwaQuote } from "../lib/cmc";
+import { jupBuy, mintFor } from "../lib/mints";
+import { mark, pickAsset, tokenCmcId } from "../lib/parse";
 import { sessionStatus } from "../lib/session";
+
+function seriesFromOhlcv(j, cid) {
+  const raw = j.data;
+  const q = raw?.quotes || raw?.[cid]?.quotes || [];
+  return q.map((c) => ({ t: String(c.time_close || c.time_open || "").slice(0, 10), c: c.quote?.USD?.close })).filter((p) => p.c);
+}
+function seriesFromHist(j, cid) {
+  const raw = j.data;
+  const q = raw?.quotes || raw?.[cid]?.quotes || [];
+  return q.map((c) => ({ t: String(c.timestamp || "").slice(0, 10), c: c.quote?.USD?.price })).filter((p) => p.c);
+}
 
 export default function Asset() {
   const { id } = useParams();
   const s = sessionStatus();
-  const [quote, setQuote] = useState(null);
+  const [asset, setAsset] = useState(null);
   const [chart, setChart] = useState([]);
   const [err, setErr] = useState("");
 
   useEffect(() => {
-    rwaQuote(id)
-      .then(setQuote)
-      .catch((e) => setErr(e.message));
+    rwaQuote(id).then((j) => setAsset(pickAsset(j, id))).catch((e) => setErr(e.message));
   }, [id]);
 
   useEffect(() => {
-    const tokenId = quote?.data?.[id]?.tokens?.[0]?.id || quote?.data?.[id]?.cmc_id;
-    if (!tokenId) return;
-    ohlcv(tokenId, 30)
+    const cid = tokenCmcId(asset || {});
+    if (!cid) return;
+    ohlcv(cid, 30)
       .then((j) => {
-        const q = j.data?.quotes || [];
-        setChart(
-          q.map((c) => ({
-            t: (c.time_close || c.time_open || "").slice(0, 10),
-            c: c.quote?.USD?.close,
-          })),
-        );
+        const s1 = seriesFromOhlcv(j, cid);
+        if (s1.length) { setChart(s1); return; }
+        throw new Error("empty ohlcv");
       })
-      .catch(() => {});
-  }, [id, quote]);
+      .catch(() =>
+        histQuotes(cid, 30)
+          .then((j) => setChart(seriesFromHist(j, cid)))
+          .catch(() => {}),
+      );
+  }, [asset]);
 
-  const block = quote?.data?.[id] || quote?.data || {};
-  const px = block.quote?.USD?.price || block.price;
+  const px = mark(asset || {});
+  const tokens = asset?.tokens || [];
+  const buy = mintFor(asset || {});
 
   return (
     <section className="page">
-      <h1>{block.name || `RWA ${id}`}</h1>
-      <p className="muted">{s.label}. CMC quote is the tape. The chart is daily OHLCV of a linked token when CMC returns a crypto id.</p>
+      <h1>{asset?.name || `RWA ${id}`}</h1>
+      <p className="muted">{s.label}</p>
       {err && <p className="warn">{err}</p>}
       <dl className="kv">
-        <div>
-          <dt>CMC mark</dt>
-          <dd>{px ? `$${Number(px).toLocaleString()}` : "—"}</dd>
-        </div>
-        <div>
-          <dt>US cash session</dt>
-          <dd>{s.open ? "Open" : "Closed"}</dd>
-        </div>
+        <div><dt>CMC mark</dt><dd>{px ? `$${Number(px).toLocaleString(undefined, { maximumFractionDigits: 2 })}` : "—"}</dd></div>
+        <div><dt>US cash session</dt><dd>{s.open ? "Open" : "Closed"}</dd></div>
       </dl>
+      {tokens.length > 0 && (
+        <p className="muted">On-chain tokens: {tokens.map((t) => `${t.symbol} $${Number(t.price || 0).toFixed(2)}`).join(" · ")}</p>
+      )}
+      {buy ? (
+        <a className="buy" href={jupBuy(buy.mint)} target="_blank" rel="noreferrer">Buy {buy.symbol} on Jupiter</a>
+      ) : (
+        <p className="muted">CMC does not execute trades. No Solana mint is mapped for this name yet, so there is no on-site swap.</p>
+      )}
       <div className="chart-box">
         {chart.length ? (
           <ResponsiveContainer width="100%" height="100%">
@@ -58,11 +72,11 @@ export default function Asset() {
               <XAxis dataKey="t" hide />
               <YAxis domain={["auto", "auto"]} hide />
               <Tooltip />
-              <Line type="monotone" dataKey="c" stroke="#6aa6ff" dot={false} />
+              <Line type="monotone" dataKey="c" stroke="#c4922a" dot={false} />
             </LineChart>
           </ResponsiveContainer>
         ) : (
-          <p className="muted">Chart appears when the API key is set and CMC returns OHLCV for a linked token. RWA endpoints have no history of their own.</p>
+          <p className="muted">Waiting on CMC history for the linked token id.</p>
         )}
       </div>
     </section>

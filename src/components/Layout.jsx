@@ -11,10 +11,9 @@ export default function Layout() {
   return (
     <div className="shell">
       <header className="nav">
-        <NavLink className="brand" to="/">
-          AFTER<span>HOURS</span>
-        </NavLink>
+        <NavLink className="brand" to="/">AFTER<span>HOURS</span></NavLink>
         <nav className="links">
+          <NavLink to="/" end>Home</NavLink>
           <NavLink to="/markets">Markets</NavLink>
           <NavLink to="/clock">Session</NavLink>
           <NavLink to="/issuers">Issuers</NavLink>
@@ -27,8 +26,7 @@ export default function Layout() {
       </header>
       <Outlet />
       <footer>
-        Prices from CoinMarketCap. Session clock is the US cash equity session
-        (09:30–16:00 America/New_York), not a CMC field. Not investment advice.
+        CoinMarketCap data. Session clock is 09:30–16:00 America/New_York. Buys route to Jupiter when a Solana mint is known. Not investment advice.
       </footer>
     </div>
   );

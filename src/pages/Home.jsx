@@ -5,20 +5,20 @@ export default function Home() {
   const s = sessionStatus();
   return (
     <section className="hero">
-      <div className="clock" style={{ marginBottom: 18 }}>
+      <div className="clock" style={{ marginBottom: 16 }}>
         <i className={`dot ${s.open ? "on" : ""}`} />
         {s.label} · {s.clock}
       </div>
-      <h1>The cash market sleeps. Tokenized stocks do not.</h1>
+      <h1>The cash market is closed. The token is still trading.</h1>
       <p>
-        CoinMarketCap prints the official mark. On-chain tokens keep trading.
-        AFTER HOURS shows both, and tells you whether that move happened while
-        New York was closed.
+        AFTER HOURS is a CoinMarketCap RWA desk. See the official tokenized mark,
+        whether New York is open, a price chart, and — when the mint lives on
+        Solana — a Jupiter buy of that exact token.
       </p>
       <div className="pills">
-        <Link className="pill" to="/markets">Browse tokenized assets</Link>
-        <Link className="pill" to="/clock">US session clock</Link>
-        <Link className="pill" to="/about">How the data works</Link>
+        <Link className="pill" to="/markets">Open the market list</Link>
+        <Link className="pill ghost" to="/clock">Session clock</Link>
+        <Link className="pill ghost" to="/about">What CMC provides</Link>
       </div>
     </section>
   );

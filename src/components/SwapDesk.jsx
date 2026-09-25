@@ -1,11 +1,11 @@
-import { useEffect, useState } from "react";
+import { lazy, Suspense, useEffect } from "react";
 import { USDC } from "../lib/mints";
 
-export default function SwapDesk({ solMint, evmAddr }) {
-  const [tab, setTab] = useState(solMint ? "sol" : evmAddr ? "evm" : "sol");
+const EvmSwap = lazy(() => import("./EvmSwap"));
 
+export default function SwapDesk({ solMint, evmAddr }) {
   useEffect(() => {
-    if (tab !== "sol" || !solMint) return;
+    if (!solMint) return;
     const start = () => {
       if (!window.Jupiter?.init) return false;
       window.Jupiter.init({
@@ -19,25 +19,28 @@ export default function SwapDesk({ solMint, evmAddr }) {
     if (start()) return;
     const t = setInterval(() => { if (start()) clearInterval(t); }, 400);
     return () => clearInterval(t);
-  }, [tab, solMint]);
+  }, [solMint]);
 
   if (!solMint && !evmAddr) {
     return <p className="muted">No Solana or Ethereum contract on this asset yet.</p>;
   }
 
-  const jumper = evmAddr
-    ? `https://jumper.exchange/?fromChain=1&toChain=1&toToken=${evmAddr}`
-    : "";
-
   return (
     <div className="desk">
-      <div className="tabs">
-        {solMint && <button className={tab === "sol" ? "on" : ""} onClick={() => setTab("sol")}>Solana</button>}
-        {evmAddr && <button className={tab === "evm" ? "on" : ""} onClick={() => setTab("evm")}>Ethereum</button>}
-      </div>
-      {tab === "sol" && solMint && <div id="ah-jup" className="jup" />}
-      {tab === "evm" && evmAddr && (
-        <iframe className="jup" title="evm-swap" src={jumper} allow="clipboard-write; clipboard-read" />
+      {solMint && (
+        <>
+          <h3>Solana</h3>
+          <div id="ah-jup" className="jup" />
+        </>
+      )}
+      {evmAddr && (
+        <>
+          <h3>Ethereum</h3>
+          <p className="muted">LI.FI widget on this page. Connect in the widget. Signs in MetaMask.</p>
+          <Suspense fallback={<p className="muted">Loading EVM desk…</p>}>
+            <EvmSwap evmAddr={evmAddr} />
+          </Suspense>
+        </>
       )}
     </div>
   );

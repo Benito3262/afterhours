@@ -8,3 +8,6 @@ export default function About() {
     </section>
   );
 }
+
+      <h2>What we cannot embed</h2>
+      <p className="muted">Robinhood, cash brokerages, and most bank apps do not give a public buy widget. CMC lists on-chain issuers (Paxos, Tether Gold, Backed, xStocks). Those appear under Issuers when the API returns them.</p>

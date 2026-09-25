@@ -1,6 +1,7 @@
 import { NavLink, Outlet } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { sessionStatus } from "../lib/session";
+import WalletBar from "./WalletBar";
 
 export default function Layout() {
   const [s, setS] = useState(() => sessionStatus());
@@ -26,6 +27,7 @@ export default function Layout() {
           <i className={`dot ${s.open ? "on" : ""}`} />
           {s.open ? "OPEN" : "CLOSED"} · {s.clock}
         </div>
+              <WalletBar />
       </header>
       <Outlet />
       <footer>

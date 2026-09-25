@@ -1,20 +1,26 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import { Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { histQuotes, ohlcv, rwaQuote } from "../lib/cmc";
 import { jupBuy, mintFor } from "../lib/mints";
 import { mark, pickAsset, tokenCmcId } from "../lib/parse";
 import { sessionStatus } from "../lib/session";
 
-function seriesFromOhlcv(j, cid) {
+function packOhlcv(j, cid) {
   const raw = j.data;
   const q = raw?.quotes || raw?.[cid]?.quotes || [];
-  return q.map((c) => ({ t: String(c.time_close || c.time_open || "").slice(0, 10), c: c.quote?.USD?.close })).filter((p) => p.c);
+  return q.map((c) => ({
+    t: String(c.time_close || c.time_open || "").slice(5, 16).replace("T", " "),
+    c: c.quote?.USD?.close,
+  })).filter((p) => p.c);
 }
-function seriesFromHist(j, cid) {
+function packHist(j, cid) {
   const raw = j.data;
   const q = raw?.quotes || raw?.[cid]?.quotes || [];
-  return q.map((c) => ({ t: String(c.timestamp || "").slice(0, 10), c: c.quote?.USD?.price })).filter((p) => p.c);
+  return q.map((c) => ({
+    t: String(c.timestamp || "").slice(5, 16).replace("T", " "),
+    c: c.quote?.USD?.price,
+  })).filter((p) => p.c);
 }
 
 export default function Asset() {
@@ -22,6 +28,7 @@ export default function Asset() {
   const s = sessionStatus();
   const [asset, setAsset] = useState(null);
   const [chart, setChart] = useState([]);
+  const [range, setRange] = useState("7D");
   const [err, setErr] = useState("");
 
   useEffect(() => {
@@ -31,18 +38,17 @@ export default function Asset() {
   useEffect(() => {
     const cid = tokenCmcId(asset || {});
     if (!cid) return;
-    ohlcv(cid, 30)
-      .then((j) => {
-        const s1 = seriesFromOhlcv(j, cid);
-        if (s1.length) { setChart(s1); return; }
-        throw new Error("empty ohlcv");
-      })
-      .catch(() =>
-        histQuotes(cid, 30)
-          .then((j) => setChart(seriesFromHist(j, cid)))
-          .catch(() => {}),
-      );
-  }, [asset]);
+    const hourly = range === "24H";
+    const count = range === "24H" ? 24 : range === "7D" ? 7 : 30;
+    const load = hourly
+      ? ohlcv(cid, 24).then((j) => packOhlcv(j, cid))
+      : ohlcv(cid, count).then((j) => {
+          const s1 = packOhlcv(j, cid);
+          if (s1.length) return s1;
+          throw new Error("empty");
+        }).catch(() => histQuotes(cid, count).then((j) => packHist(j, cid)));
+    load.then(setChart).catch(() => setChart([]));
+  }, [asset, range]);
 
   const px = mark(asset || {});
   const tokens = asset?.tokens || [];
@@ -58,27 +64,39 @@ export default function Asset() {
         <div><dt>US cash session</dt><dd>{s.open ? "Open" : "Closed"}</dd></div>
       </dl>
       {tokens.length > 0 && (
-        <p className="muted">On-chain tokens: {tokens.map((t) => `${t.symbol} $${Number(t.price || 0).toFixed(2)}`).join(" · ")}</p>
+        <p className="muted">Tokens: {tokens.map((t) => `${t.symbol} $${Number(t.price || 0).toFixed(2)}`).join(" · ")}</p>
       )}
-      {buy ? (
-        <a className="buy" href={jupBuy(buy.mint)} target="_blank" rel="noreferrer">Buy {buy.symbol} on Jupiter</a>
-      ) : (
-        <p className="muted">CMC does not execute trades. No Solana mint is mapped for this name yet, so there is no on-site swap.</p>
-      )}
+      <div className="tabs">
+        {["24H", "7D", "30D"].map((r) => (
+          <button key={r} className={range === r ? "on" : ""} onClick={() => setRange(r)}>{r}</button>
+        ))}
+      </div>
       <div className="chart-box">
         {chart.length ? (
           <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={chart}>
-              <XAxis dataKey="t" hide />
-              <YAxis domain={["auto", "auto"]} hide />
-              <Tooltip />
-              <Line type="monotone" dataKey="c" stroke="#c4922a" dot={false} />
+            <LineChart data={chart} margin={{ top: 8, right: 12, left: 8, bottom: 8 }}>
+              <CartesianGrid stroke="#d5e2f2" strokeDasharray="3 3" />
+              <XAxis dataKey="t" tick={{ fontSize: 11 }} minTickGap={24} />
+              <YAxis domain={["auto", "auto"]} tick={{ fontSize: 11 }} width={64} tickFormatter={(v) => `$${Number(v).toFixed(0)}`} />
+              <Tooltip formatter={(v) => [`$${Number(v).toFixed(2)}`, "Price"]} />
+              <Line type="monotone" dataKey="c" stroke="#2f6fed" strokeWidth={2} dot={false} />
             </LineChart>
           </ResponsiveContainer>
         ) : (
-          <p className="muted">Waiting on CMC history for the linked token id.</p>
+          <p className="muted">No history for this range yet.</p>
         )}
       </div>
+      {buy ? (
+        <>
+          <a className="buy" href={jupBuy(buy.mint)} target="_blank" rel="noreferrer">Buy {buy.symbol} on Jupiter</a>
+          <iframe className="jup" title="jupiter" src={`https://jup.ag/swap/USDC-${buy.symbol}`} />
+        </>
+      ) : (
+        <p className="muted">
+          Trade is on-site only when the asset has a Solana mint we mapped (AAPLx, NVDAx, TSLAx, SPCXx).
+          Gold tokens like PAXG live on other chains — use the venue for that token.
+        </p>
+      )}
     </section>
   );
 }

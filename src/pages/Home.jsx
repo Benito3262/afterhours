@@ -1,6 +1,5 @@
 import { Link } from "react-router-dom";
 import { sessionStatus } from "../lib/session";
-
 export default function Home() {
   const s = sessionStatus();
   return (
@@ -9,16 +8,15 @@ export default function Home() {
         <i className={`dot ${s.open ? "on" : ""}`} />
         {s.label} · {s.clock}
       </div>
-      <h1>The cash market is closed. The token is still trading.</h1>
+      <h1>See the mark. See the clock. Trade the token.</h1>
       <p>
-        AFTER HOURS is a CoinMarketCap RWA desk. See the official tokenized mark,
-        whether New York is open, a price chart, and — when the mint lives on
-        Solana — a Jupiter buy of that exact token.
+        Tokenized gold and stocks trade while New York is closed. AFTER HOURS
+        shows the CoinMarketCap RWA mark, session state, a real chart, and a
+        Jupiter buy when the mint is on Solana.
       </p>
       <div className="pills">
-        <Link className="pill" to="/markets">Open the market list</Link>
-        <Link className="pill ghost" to="/clock">Session clock</Link>
-        <Link className="pill ghost" to="/about">What CMC provides</Link>
+        <Link className="pill" to="/markets">Browse RWAs</Link>
+        <Link className="pill ghost" to="/clock">Session</Link>
       </div>
     </section>
   );
